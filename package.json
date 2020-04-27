@@ -4,6 +4,6 @@
   "version": "0.0.0",
   "postload": "postload.js",
   "ccmodDependencies": {
-    "crosscode": ">=1.2.0"
+    "crosscode": "~1.2.0"
   }
 }
