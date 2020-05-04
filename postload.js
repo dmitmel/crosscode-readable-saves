@@ -8,7 +8,7 @@ ig.module('readable-saves')
     const fs = require('fs').promises;
     const path = require('path');
 
-    function serializePretty(data) {
+    function stringifyPretty(data) {
       return JSON.stringify(data, null, 2);
     }
 
@@ -42,6 +42,37 @@ ig.module('readable-saves')
       }
       return result;
     }
+
+    ig.SaveSlot.inject({
+      stringified: null,
+      stringifiedPretty: null,
+
+      init(srcOrData) {
+        // this.parent(...args);
+        // // `JSON.stringify` (2-6 ms) is much faster than AES decryption in
+        // // `ig.StorageTools ig.StorageTools.encryptSlotData
+
+        if (ig.StorageTools.isEncrypted(srcOrData)) {
+          this.data = ig.StorageTools.decryptSlotData(srcOrData);
+        } else {
+          // Note that I skip re-encryption here. Firstly, That's because I
+          // don't use the unencrypted text anyway (see the implementation of
+          // `ig.Storage#_saveToStorage`). Secondly, AES encryption used in
+          // `ig.StorageTools` (and cryptography in general) is SLOW, it takes
+          // ~80 ms per save on my machine.
+          this.data = srcOrData;
+        }
+
+        // these two lines usually take about 10 ms, much faster than AES as you
+        // can probably guess
+        this.stringified = JSON.stringify(this.data);
+        this.stringifiedPretty = stringifyPretty(this.data);
+      },
+
+      getSrc() {
+        throw new Error('crosscode-readable-saves: saves are unencrypted!!!');
+      },
+    });
 
     // TODO: explain why I don't use backups
 
@@ -156,7 +187,7 @@ ig.module('readable-saves')
         } catch (err) {
           // note that here I don't crash the game with `ig.system.error`
           // because the user might still have the chance of repairing their
-          // filesystem and making their savefile writable, with `chmod` or
+          // filesystem and making their save file writable, with `chmod` or
           // `chown` for example
           err.message = `An error occured while writing the savegame. Please repair your filesystem immediately!!!\n${err.message}`;
           console.error(err);
@@ -276,26 +307,67 @@ ig.module('readable-saves')
           }
         }
 
-        let savesData = {
+        // Right now you might be screaming at your monitor while looking at
+        // this code and/or wondering about the following two questions:
+        // 1. "Why do you replace the default savegame format?"
+        // 2. "Why do you stitch together strings to get serialized JSON?"
+        // Bear with me and I'll explain why do I do both of these things.
+        //
+        // First of all, I believe that save encryption is totally unnecessary
+        // for CC, so I naturally want to remove it everywhere. But you might
+        // argue that by putting JSON objects directly into the save instead of
+        // the encrypted strings would crash the game if it'd try to load the
+        // savegame without this mod. Well, you are not entirely correct.
+        // Obviously, I have to be careful not to introduce breaking changes
+        // into the save format because otherwise the game won't be able to
+        // recover from it if this mod is uninstalled. But you see, the
+        // storage-related code is filled with checks such as:
+        //
+        // ```
+        // if (ig.StorageTools.isEncrypted(data)) {
+        //   data = JSON.parse(ig.StorageTools.decrypt(data));
+        // }
+        // // continue working with `data`
+        // ````
+        //
+        // So as you can see, even the stock game can run perfectly off of an
+        // (even partially) unencrypted save file. Moreover, those checks have
+        // always been present (verified by looking into the code of v1.0.1-1
+        // and v0.7.0), even way back when `localStorage` was used for storing
+        // saves. So it is safe to say that this unencrypted save format is
+        // perfectly compatible with virtually any version of the game currently
+        // in use.
+        //
+        // Secondly, I concatenate already stringified strings of save slots
+        // here to speed up the overall serialization because serializing this
+        // whole object on each write takes too much time, plus save slots
+        // aren't really modified internally, so I can precompute their
+        // serialized contents.
+        this.data.save(
+          `{${[
+            `"slots":[${this.slots.map((s) => s.stringified).join(',')}]`,
+            `"autoSlot":${
+              this.autoSlot != null ? this.autoSlot.stringified : 'null'
+            }`,
+            `"globals":${JSON.stringify(globals)}`,
+            `"lastSlot":${this.lastUsedSlot}`,
+          ].join(',')}}`,
+        );
+
+        this.readableData.save({
+          slots: this.slots.map((s) => s.stringifiedPretty),
+          autoSlot:
+            this.autoSlot != null ? this.autoSlot.stringifiedPretty : 'null',
+          globals: stringifyPretty(globals),
+          misc: stringifyPretty({ lastSlot: this.lastUsedSlot }),
+        });
+
+        return {
           slots: this.slots.map((slot) => slot.data),
           autoSlot: this.autoSlot != null ? this.autoSlot.data : null,
           globals,
           lastSlot: this.lastUsedSlot,
         };
-        // TODO: explain that replacing the original save format is perfectly
-        // backward-compatible
-        this.data.save(JSON.stringify(savesData));
-
-        // TODO: consider using https://github.com/ibmruntimes/yieldable-json
-        // for faster serialization
-        this.readableData.save({
-          slots: savesData.slots.map((slot) => serializePretty(slot)),
-          autoSlot: serializePretty(savesData.autoSlot),
-          globals: serializePretty(savesData.globals),
-          misc: serializePretty({ lastSlot: savesData.lastSlot }),
-        });
-
-        return savesData;
       },
     });
   });
