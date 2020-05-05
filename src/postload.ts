@@ -75,8 +75,6 @@ ig.module('readable-saves')
       },
     });
 
-    // TODO: explain why I don't use backups
-
     ig.StorageDataReadable = ig.Class.extend({
       loaded: false,
       cacheType: 'StorageDataReadable',
@@ -207,7 +205,13 @@ ig.module('readable-saves')
       },
 
       async _writeToDir(rootDir, data) {
-        // TODO: explain file modes
+        // You know, while writing this I thought of setting file
+        // modes/permissions on the save file correctly. Good UNIX citizens
+        // usually set 600 (rw-------) permissions on private files and
+        // CrossCode savegame can be considered a private file, but since the
+        // stock game doesn't do that already and I doubt that many people play
+        // CrossCode on multi-user UNIX setups, I believe that this is
+        // unnecessary (at least for the time being).
 
         // first of all, create the directory structure in the correct order
         await mkdirIfNotExists(rootDir);
