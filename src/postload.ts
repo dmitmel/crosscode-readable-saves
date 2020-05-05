@@ -12,7 +12,13 @@ ig.module('readable-saves')
     }
 
     async function readJsonFile<T>(file: string): Promise<T> {
-      return JSON.parse(await fsp.readFile(file, 'utf8'));
+      let text = await fsp.readFile(file, 'utf8');
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        err.message = `JSON syntax error in file '${file}':\n${err.message}`;
+        throw err;
+      }
     }
 
     async function readJsonFileOptional<T>(file: string): Promise<T | null> {
