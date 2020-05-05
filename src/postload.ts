@@ -1,22 +1,21 @@
-if (ig.platform !== ig.PLATFORM_TYPES.DESKTOP) {
-  throw new Error('only desktop is supported');
-}
+import './platform-check.js';
+import fs from './node-builtin-modules/fs.js';
+import path from './node-builtin-modules/path.js';
+
+const fsp = fs.promises;
 
 ig.module('readable-saves')
   .requires('impact.feature.storage.storage')
   .defines(() => {
-    const fs = require('fs').promises;
-    const path = require('path');
-
-    function stringifyPretty(data) {
+    function stringifyPretty(data: unknown): string {
       return JSON.stringify(data, null, 2);
     }
 
-    async function readJsonFile(file) {
-      return JSON.parse(await fs.readFile(file, 'utf8'));
+    async function readJsonFile<T>(file: string): Promise<T> {
+      return JSON.parse(await fsp.readFile(file, 'utf8'));
     }
 
-    async function readJsonFileOptional(file) {
+    async function readJsonFileOptional<T>(file: string): Promise<T | null> {
       try {
         return await readJsonFile(file);
       } catch (err) {
@@ -25,15 +24,15 @@ ig.module('readable-saves')
       }
     }
 
-    async function mkdirIfNotExists(dir, options) {
+    async function mkdirIfNotExists(dir: string): Promise<void> {
       try {
-        await fs.mkdir(dir, options);
+        await fsp.mkdir(dir);
       } catch (err) {
         if (err.code !== 'EEXIST') throw err;
       }
     }
 
-    function countDigits(n) {
+    function countDigits(n: number): number {
       n = Math.abs(n);
       let result = 1;
       while (n >= 10) {
@@ -48,10 +47,6 @@ ig.module('readable-saves')
       stringifiedPretty: null,
 
       init(srcOrData) {
-        // this.parent(...args);
-        // // `JSON.stringify` (2-6 ms) is much faster than AES decryption in
-        // // `ig.StorageTools ig.StorageTools.encryptSlotData
-
         if (ig.StorageTools.isEncrypted(srcOrData)) {
           this.data = ig.StorageTools.decryptSlotData(srcOrData);
         } else {
@@ -86,7 +81,7 @@ ig.module('readable-saves')
       queuedSaveData: null,
 
       init() {
-        ig.addResource(this);
+        ig.ready ? this.load() : ig.addResource(this);
       },
 
       async load(loadCallback) {
@@ -114,11 +109,11 @@ ig.module('readable-saves')
           // `ig.system.error` inside `loadCallback` overlaps ours.
         }
 
-        loadCallback(this.cacheType, this.path, true);
+        if (loadCallback != null) loadCallback(this.cacheType, this.path, true);
       },
 
-      async _readFromDir(rootDir) {
-        let globals;
+      async _readFromDir(rootDir): Promise<ig.StorageData.SaveFileData | null> {
+        let globals: ig.Storage.GlobalsData;
 
         // `globals.json` is used here to test the existance of the save
         // directory precisely because regular save files are guranteed to
@@ -129,7 +124,7 @@ ig.module('readable-saves')
         } catch (err) {
           if (err.code === 'ENOENT') {
             try {
-              await fs.stat(rootDir);
+              await fsp.stat(rootDir);
             } catch (err2) {
               if (err2.code === 'ENOENT') {
                 // the save dir doesn't exist? not a big deal, let's try another one
@@ -150,24 +145,33 @@ ig.module('readable-saves')
 
         let slotsDir = path.join(rootDir, 'slots');
         let slotsDirFilenames = (
-          await fs.readdir(slotsDir, { withFileTypes: true })
+          await fsp.readdir(slotsDir, { withFileTypes: true })
         )
           .filter((dirent) => !dirent.isDirectory())
           .map((dirent) => dirent.name)
           .sort();
 
         // files are read in parallel for MAXIMUM PERFORMANCE BOOST
-        let [slots, autoSlot, misc] = await Promise.all([
+        let [slots, autoSlot, misc] = await Promise.all<
+          ig.SaveSlot.Data[],
+          ig.SaveSlot.Data | null,
+          ig.StorageDataReadable.MiscData | null
+        >([
           Promise.all(
             slotsDirFilenames.map((filename) =>
-              readJsonFile(path.join(slotsDir, filename)),
+              readJsonFile<ig.SaveSlot.Data>(path.join(slotsDir, filename)),
             ),
           ),
           readJsonFileOptional(path.join(rootDir, 'autoSlot.json')),
           readJsonFileOptional(path.join(rootDir, 'misc.json')),
         ]);
 
-        return { slots, autoSlot, globals, lastSlot: misc.lastSlot };
+        return {
+          slots,
+          autoSlot,
+          globals,
+          lastSlot: misc != null ? misc.lastSlot : undefined,
+        };
       },
 
       save(data) {
@@ -213,8 +217,8 @@ ig.module('readable-saves')
         // having a non-numeric filename), it will be added to the slots list
         // every time the savegame is read, therefore creating an infinitely
         // growing slot list.
-        let slotsDirFilenamesToDelete = new Set();
-        for (let dirent of await fs.readdir(slotsDir, {
+        let slotsDirFilenamesToDelete = new Set<string>();
+        for (let dirent of await fsp.readdir(slotsDir, {
           withFileTypes: true,
         })) {
           if (dirent.isDirectory()) continue;
@@ -232,25 +236,25 @@ ig.module('readable-saves')
           let indexStr = index.toString(10).padStart(slotFileDigits, '0');
           let filename = `${indexStr}.json`;
           slotsDirFilenamesToDelete.delete(filename);
-          return fs.writeFile(path.join(slotsDir, filename), slotData, 'utf8');
+          return fsp.writeFile(path.join(slotsDir, filename), slotData, 'utf8');
         });
 
         for (let filename of slotsDirFilenamesToDelete) {
-          promises.push(fs.unlink(path.join(slotsDir, filename)));
+          promises.push(fsp.unlink(path.join(slotsDir, filename)));
         }
 
         promises.push(
-          fs.writeFile(
+          fsp.writeFile(
             path.join(rootDir, 'autoSlot.json'),
             data.autoSlot,
             'utf8',
           ),
-          fs.writeFile(
+          fsp.writeFile(
             path.join(rootDir, 'globals.json'),
             data.globals,
             'utf8',
           ),
-          fs.writeFile(path.join(rootDir, 'misc.json'), data.misc, 'utf8'),
+          fsp.writeFile(path.join(rootDir, 'misc.json'), data.misc, 'utf8'),
         );
 
         // now that all directories have been created, I can fire up all actual
@@ -338,7 +342,7 @@ ig.module('readable-saves')
         // perfectly compatible with virtually any version of the game currently
         // in use.
         //
-        // Secondly, I concatenate already stringified strings of save slots
+        // Secondly, I concatenate already serialized strings of save slots
         // here to speed up the overall serialization because serializing this
         // whole object on each write takes too much time, plus save slots
         // aren't really modified internally, so I can precompute their
