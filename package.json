@@ -1,7 +1,10 @@
 {
   "name": "readable-saves",
   "ccmodHumanName": "Readable saves",
+  "description": "Unencrypts the save file and adds an additional save format suitable for editing by hand",
   "version": "0.0.0",
+  "license": "MIT",
+  "homepage": "https://github.com/dmitmel/crosscode-readable-saves",
   "module": true,
   "postload": "dist/postload.js",
   "ccmodDependencies": {
