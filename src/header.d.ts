@@ -39,11 +39,11 @@ declare namespace ig {
     extends ImpactClass<StorageDataReadable> {
     GAME_DATA_DIRECTORIES: string[];
 
-    new (): this['__instance'];
+    new (): StorageDataReadable;
   }
   let StorageDataReadable: StorageDataReadableConstructor;
 
   interface Storage {
-    readableData: StorageDataReadable;
+    readableData: ig.StorageDataReadable;
   }
 }
