@@ -7,17 +7,10 @@
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-1.10.35.tgz#4e5c2b1e5b3bf0b863efb8c5e70081f52e6c9518"
   integrity sha512-SVtqEcudm7yjkTwoRA1gC6CNMhGDdMx4Pg8BPdiqI7bXXdCn1BPmtxgeWYQOgDxrq53/5YTlhq5ULxBEAlWIBg==
 
-"@types/node@*":
-  version "14.0.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.0.1.tgz#5d93e0a099cd0acd5ef3d5bde3c086e1f49ff68c"
-  integrity sha512-FAYBGwC+W6F9+huFIDtn43cpy7+SzG+atzRiTfdp3inUKL2hXnd4rG8hylJLIh4+hqrQy1P17kvJByE/z825hA==
-
-"@types/nw.js@~0.13":
-  version "0.13.9"
-  resolved "https://registry.yarnpkg.com/@types/nw.js/-/nw.js-0.13.9.tgz#897f335eea884750562691ddee4d209d9828f8c0"
-  integrity sha512-OxpYKOFJsn8ZGdCTfssbx01PKW5DGg0gPwHWAU2C32GFu8WeMU/qTplI6SwirNZh/4ypmo6N6w2FrUO8m6iDxA==
-  dependencies:
-    "@types/node" "*"
+"@types/node@>=11.9":
+  version "14.0.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.0.5.tgz#3d03acd3b3414cf67faf999aed11682ed121f22b"
+  integrity sha512-90hiq6/VqtQgX8Sp0EzeIsv3r+ellbGj4URKj5j30tLlZvRUpnAe9YbYnjl3pJM93GyXU0tghHhvXHq+5rnCKA==
 
 typescript@^3.8.3:
   version "3.9.2"
@@ -26,8 +19,7 @@ typescript@^3.8.3:
 
 ultimate-crosscode-typedefs@dmitmel/ultimate-crosscode-typedefs:
   version "0.0.1"
-  resolved "https://codeload.github.com/dmitmel/ultimate-crosscode-typedefs/tar.gz/899caafb59bb5eb4eef5f72e36bf2b1561bfefaa"
+  resolved "https://codeload.github.com/dmitmel/ultimate-crosscode-typedefs/tar.gz/fed3fed0e3755a248c69ddbd0472ea3ec1c43adf"
   dependencies:
     "@types/jquery" "~1.10"
-    "@types/node" "*"
-    "@types/nw.js" "~0.13"
+    "@types/node" ">=11.9"
