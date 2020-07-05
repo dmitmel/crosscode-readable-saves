@@ -314,7 +314,7 @@ ig.module('readable-saves')
       },
 
       _saveToStorage() {
-        let globals = {};
+        let globals = {} as ig.Storage.GlobalsData;
         for (let listener of this.listeners) {
           if (listener.onStorageGlobalSave != null) {
             listener.onStorageGlobalSave(globals);
