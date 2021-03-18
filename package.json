@@ -7,9 +7,6 @@
   "homepage": "https://github.com/dmitmel/crosscode-readable-saves",
   "module": true,
   "postload": "dist/postload.js",
-  "ccmodDependencies": {
-    "crosscode": "~1.2.0"
-  },
   "devDependencies": {
     "typescript": "^3.9.0",
     "ultimate-crosscode-typedefs": "dmitmel/ultimate-crosscode-typedefs"
