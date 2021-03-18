@@ -85,12 +85,15 @@ ig.module('readable-saves')
       queuedSaveData: null,
 
       init() {
-        ig.ready ? this.load() : ig.addResource(this);
+        if (ig.ready) this.load();
+        else ig.addResource(this);
       },
 
       async load(loadCallback) {
         try {
-          for (let gameDataDir of this.constructor.GAME_DATA_DIRECTORIES) {
+          let gameDataDirs = (this.constructor as typeof ig.StorageDataReadable)
+            .GAME_DATA_DIRECTORIES;
+          for (let gameDataDir of gameDataDirs) {
             let rootDir = path.join(gameDataDir, this.path);
             let loadedData = await this._readFromDir(rootDir);
             // `null` returned by `_readFromDir` basically means "the error
@@ -187,10 +190,9 @@ ig.module('readable-saves')
         this.saveInProgress = true;
 
         try {
-          let rootDir = path.join(
-            this.constructor.GAME_DATA_DIRECTORIES[0],
-            this.path,
-          );
+          let gameDataDirs = (this.constructor as typeof ig.StorageDataReadable)
+            .GAME_DATA_DIRECTORIES;
+          let rootDir = path.join(gameDataDirs[0], this.path);
           this._writeToDir(rootDir, data);
         } catch (err) {
           // note that here I don't crash the game with `ig.system.error`
