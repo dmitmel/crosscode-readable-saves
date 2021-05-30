@@ -22,21 +22,13 @@ declare namespace ig {
     saveInProgress: boolean;
     queuedSaveData: ig.StorageDataReadable.SaveDataBlock | null;
 
-    _readFromDir(
-      this: this,
-      rootDir: string,
-    ): Promise<ig.StorageData.SaveFileData | null>;
+    _readFromDir(this: this, rootDir: string): Promise<ig.StorageData.SaveFileData | null>;
     save(this: this, data: ig.StorageDataReadable.SaveDataBlock): void;
     _write(this: this, data: ig.StorageDataReadable.SaveDataBlock): void;
-    _writeToDir(
-      this: this,
-      rootDir: string,
-      data: ig.StorageDataReadable.SaveDataBlock,
-    ): void;
+    _writeToDir(this: this, rootDir: string, data: ig.StorageDataReadable.SaveDataBlock): void;
     _onWriteFinished(this: this): void;
   }
-  interface StorageDataReadableConstructor
-    extends ImpactClass<StorageDataReadable> {
+  interface StorageDataReadableConstructor extends ImpactClass<StorageDataReadable> {
     GAME_DATA_DIRECTORIES: string[];
 
     new (): StorageDataReadable;

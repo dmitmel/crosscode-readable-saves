@@ -151,9 +151,7 @@ ig.module('readable-saves')
         // special-case checks on ENOENT errors
 
         let slotsDir = path.join(rootDir, 'slots');
-        let slotsDirFilenames = (
-          await fsp.readdir(slotsDir, { withFileTypes: true })
-        )
+        let slotsDirFilenames = (await fsp.readdir(slotsDir, { withFileTypes: true }))
           .filter((dirent) => !dirent.isDirectory())
           .map((dirent) => dirent.name)
           .sort();
@@ -177,6 +175,7 @@ ig.module('readable-saves')
           slots,
           autoSlot,
           globals,
+          // eslint-disable-next-line no-undefined
           lastSlot: misc != null ? misc.lastSlot : undefined,
         };
       },
@@ -186,7 +185,7 @@ ig.module('readable-saves')
         else this.queuedSaveData = data;
       },
 
-      async _write(data) {
+      _write(data) {
         this.saveInProgress = true;
 
         try {
@@ -237,9 +236,7 @@ ig.module('readable-saves')
 
           if (slotsDirFilenamesToDelete.has(dirent.name)) {
             // what the hell???
-            throw new Error(
-              `duplicate filename ${dirent.name} in directory ${slotsDir}`,
-            );
+            throw new Error(`duplicate filename ${dirent.name} in directory ${slotsDir}`);
           }
           slotsDirFilenamesToDelete.add(dirent.name);
         }
@@ -256,16 +253,8 @@ ig.module('readable-saves')
         }
 
         promises.push(
-          fsp.writeFile(
-            path.join(rootDir, 'autoSlot.json'),
-            data.autoSlot,
-            'utf8',
-          ),
-          fsp.writeFile(
-            path.join(rootDir, 'globals.json'),
-            data.globals,
-            'utf8',
-          ),
+          fsp.writeFile(path.join(rootDir, 'autoSlot.json'), data.autoSlot, 'utf8'),
+          fsp.writeFile(path.join(rootDir, 'globals.json'), data.globals, 'utf8'),
           fsp.writeFile(path.join(rootDir, 'misc.json'), data.misc, 'utf8'),
         );
 
@@ -362,9 +351,7 @@ ig.module('readable-saves')
         this.data.save(
           `{${[
             `"slots":[${this.slots.map((s) => s.stringified).join(',')}]`,
-            `"autoSlot":${
-              this.autoSlot != null ? this.autoSlot.stringified : 'null'
-            }`,
+            `"autoSlot":${this.autoSlot != null ? this.autoSlot.stringified : 'null'}`,
             `"globals":${JSON.stringify(globals)}`,
             `"lastSlot":${this.lastUsedSlot}`,
           ].join(',')}}`,
@@ -372,8 +359,7 @@ ig.module('readable-saves')
 
         this.readableData.save({
           slots: this.slots.map((s) => s.stringifiedPretty),
-          autoSlot:
-            this.autoSlot != null ? this.autoSlot.stringifiedPretty : 'null',
+          autoSlot: this.autoSlot != null ? this.autoSlot.stringifiedPretty : 'null',
           globals: stringifyPretty(globals),
           misc: stringifyPretty({ lastSlot: this.lastUsedSlot }),
         });
