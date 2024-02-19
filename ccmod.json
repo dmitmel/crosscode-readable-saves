@@ -1,0 +1,10 @@
+{
+  "id": "readable-saves",
+  "version": "1.0.1",
+  "title": "Readable saves",
+  "description": "Unencrypts the save file and adds an additional save format suitable for editing by hand",
+  "repository": "https://github.com/dmitmel/crosscode-readable-saves",
+  "tags": ["dev"],
+  "authors": "dmitmel",
+  "postload": "dist/postload.js"
+}
